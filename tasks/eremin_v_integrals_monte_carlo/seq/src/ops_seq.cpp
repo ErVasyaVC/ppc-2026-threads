@@ -25,7 +25,7 @@ bool EreminVIntegralsMonteCarloSEQ::ValidationImpl() {
   if (input.bounds.empty()) {
     return false;
   }
-  if (!input.func) {
+  if (input.func == nullptr) {
     return false;
   }
 
