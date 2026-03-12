@@ -55,25 +55,16 @@ bool EreminVIntegralsMonteCarloOMP::RunImpl() {
     volume *= (b - a);
   }
 
-  std::mt19937 gen(std::random_device{}());
-
-  std::vector<std::uniform_real_distribution<double>> distributions;
-  distributions.reserve(dimension);
-
-  for (const auto &[a, b] : bounds) {
-    distributions.emplace_back(a, b);
-  }
-
   double sum = 0.0;
 #pragma omp parallel reduction(+ : sum) default(none) shared(bounds, samples, func, dimension)
   {
-    std::mt19937 gen(std::random_device{}() + omp_get_thread_num());
+    std::mt19937 local_gen(std::random_device{}() + omp_get_thread_num());
 
-    std::vector<std::uniform_real_distribution<double>> distributions;
-    distributions.reserve(dimension);
+    std::vector<std::uniform_real_distribution<double>> local_distributions;
+    local_distributions.reserve(dimension);
 
     for (const auto &[a, b] : bounds) {
-      distributions.emplace_back(a, b);
+      local_distributions.emplace_back(a, b);
     }
 
     std::vector<double> point(dimension);
@@ -81,7 +72,7 @@ bool EreminVIntegralsMonteCarloOMP::RunImpl() {
 #pragma omp for
     for (int i = 0; i < samples; ++i) {
       for (std::size_t dim = 0; dim < dimension; ++dim) {
-        point[dim] = distributions[dim](gen);
+        point[dim] = local_distributions[dim](local_gen);
       }
 
       sum += func(point);
